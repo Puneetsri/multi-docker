@@ -1,0 +1,25 @@
+sudo: required
+services:
+  - docker
+
+
+before_install:
+  - docker build -t puneetsri/multi-docker-react-test -f ./client/Dockerfile.dev ./client
+  # you can add other tests from other modules as well in here
+
+script: #It's the primary test running section , if any of the script exist with return code other than zero, travis CI will assume that the build failed
+  - docker run puneetsri/multi-docker-react-test npm test -- --coverage
+
+after_success:
+  - docker build -t puneetsri/multi-docker-client ./client
+  - docker build -t puneetsri/multi-docker-nginx ./nginx
+  - docker build -t puneetsri/multi-docker-server ./server
+  - docker build -t puneetsri/multi-docker-worker ./worker
+  #Log into the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  #Take those images and push them to docker hub
+  - docker push puneetsri/multi-docker-client
+  - docker push puneetsri/multi-docker-nginx
+  - docker push puneetsri/multi-docker-server
+  - docker push puneetsri/multi-docker-worker
