@@ -1,0 +1,45 @@
+version: '3'
+services:
+  postgres: # service name is used as domain name/URL
+    image: 'postgres:latest'
+  redis:
+    image: 'redis:latest'
+  nginx:
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - '3050:80'
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./server
+    volumes:
+      - /app/node_modules #Leave this folder as it is, don't overwrite it
+      - ./server:/app #Share everything from server folder with app folder inside container. That means any change inside server folder will automatically be reflected in app folder inside container
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432
+  client:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes:
+      - /app/node_modules #Leave this folder as it is, don't overwrite it
+      - ./client:/app #Share everything from client folder with app folder inside container. That means any change inside server folder will automatically be reflected in app folder inside container
+  worker:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    volumes:
+      - /app/node_modules #Leave this folder as it is, don't overwrite it
+      - ./worker:/app #Share everything from worker folder with app folder inside container. That means any change inside server folder will automatically be reflected in app folder inside container
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
